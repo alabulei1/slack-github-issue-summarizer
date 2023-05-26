@@ -78,8 +78,9 @@ async fn handler(worksapce: &str, channel: &str, sm: SlackMessage) {
                 for issue in pages {
                     if triggered {
                         count -= 1;
-                        let summary = get_summary(&owner, &repo, issue).await;
-                        send_message_to_channel(&worksapce, &channel, summary);
+                        let summary = "placeholder for gpt summary";
+                        // let summary = get_summary(&owner, &repo, issue).await;
+                        send_message_to_channel(&worksapce, &channel, summary.to_string());
 
                         if count <= 0 {
                             send_message_to_channel(
@@ -107,8 +108,8 @@ async fn handler(worksapce: &str, channel: &str, sm: SlackMessage) {
         };
     }
 }
-
-pub async fn get_summary(owner: &str, repo: &str, issue: Issue) -> String {
+/*
+async fn get_summary(owner: &str, repo: &str, issue: Issue) -> String {
     let mut openai = OpenAIFlows::new();
     openai.set_retry_times(3);
 
@@ -210,3 +211,4 @@ pub async fn get_summary(owner: &str, repo: &str, issue: Issue) -> String {
 
     format!("Issue Summary:\n{}\n{}", _summary, issue_url)
 }
+ */
