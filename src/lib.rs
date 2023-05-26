@@ -66,6 +66,7 @@ async fn handler(worksapce: &str, channel: &str, sm: SlackMessage) {
             repo,
             (Utc::now() - Duration::days(n_days)).format("%Y-%m-%d")
         );
+        send_message_to_channel(&worksapce, "ch_in", query.to_string());
 
         match octocrab
             .search()
