@@ -1,4 +1,4 @@
-use chrono::{DateTime, Duration, Utc};
+use chrono::{Duration, Utc};
 use dotenv::dotenv;
 use github_flows::{get_octo, octocrab::models::issues::Issue, GithubLogin::Default};
 use openai_flows::{
@@ -27,8 +27,6 @@ pub fn run() {
 async fn handler(worksapce: &str, channel: &str, sm: SlackMessage) {
     let trigger_word = env::var("trigger_word").unwrap_or("flows summarize".to_string());
     let octocrab = get_octo(&Default);
-    let mut owner = "".to_string();
-    let mut repo = "".to_string();
     let re = Regex::new(r"^(\s*\w+(?: \w+)?)(.*)( \d+)").unwrap();
     let cap = re.captures(&sm.text).unwrap();
 
@@ -41,13 +39,14 @@ async fn handler(worksapce: &str, channel: &str, sm: SlackMessage) {
         return;
     }
 
-    let n_days = match cap.get(3) {
+    let _n_days = match cap.get(3) {
         Some(n) => n.as_str().trim().parse::<i64>().unwrap_or(7),
         None => 7,
     };
-    let n_days_ago = Utc::now()
-        .checked_sub_signed(Duration::days(n_days))
-        .unwrap();
+    let n_days_ago_str = Utc::now()
+        .checked_sub_signed(Duration::days(_n_days))
+        .unwrap()
+        .format("%Y-%m-%d");
 
     if let Some(owner_repo_str) = cap.get(2) {
         let owner_repo = owner_repo_str
@@ -57,16 +56,10 @@ async fn handler(worksapce: &str, channel: &str, sm: SlackMessage) {
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
 
-        owner = owner_repo.get(0).unwrap_or(&"".to_string()).to_string();
-        repo = owner_repo.get(1).unwrap_or(&"".to_string()).to_string();
+        let owner = owner_repo.get(0).unwrap_or(&"".to_string()).to_string();
+        let repo = owner_repo.get(1).unwrap_or(&"".to_string()).to_string();
 
-        let query = format!(
-            "repo:{}/{} is:issue state:open updated:>{}",
-            owner,
-            repo,
-            (Utc::now() - Duration::days(n_days)).format("%Y-%m-%d")
-        );
-        send_message_to_channel(&worksapce, "ch_in", query.to_string());
+        let query = format!("repo:{owner}/{repo} is:issue state:open updated:>{n_days_ago_str}");
 
         match octocrab
             .search()
@@ -77,35 +70,34 @@ async fn handler(worksapce: &str, channel: &str, sm: SlackMessage) {
             Ok(pages) => {
                 let mut count = 10;
                 for issue in pages {
-                    if triggered {
-                        count -= 1;
-                        // let summary = "placeholder for gpt summary";
-                        let summary = get_summary(&owner, &repo, issue).await;
-                        send_message_to_channel(&worksapce, &channel, summary.to_string());
+                    count -= 1;
+                    let summary = get_summary(&owner, &repo, issue).await;
+                    send_message_to_channel(&worksapce, &channel, summary.to_string());
 
-                        if count <= 0 {
-                            send_message_to_channel(
+                    if count <= 0 {
+                        send_message_to_channel(
                                 &worksapce,
                                 &channel,
                                 "You've reached your limit of 10 issues. Please wait 10 minutes before running the command again.".to_string(),
                             );
-                            break;
-                        }
+                        break;
                     }
                 }
             }
             Err(_error) => {
-                let _text = sm.text.clone();
-                send_message_to_channel(
-                    &worksapce,
-                    &channel,
-                    format!(
-                        r#"Please double check if there are errors in the owner and repo names provided in your message:
-        {_text}
-        if yes, please correct the spelling and resend your instruction."#
-                    ),
-                );
-                return;
+                if triggered {
+                    let _text = sm.text.clone();
+                    send_message_to_channel(
+                        &worksapce,
+                        &channel,
+                        format!(
+                            r#"Please double check if there are errors in the owner and repo names provided in your message:
+{_text}
+if yes, please correct the spelling and resend your instruction."#
+                        ),
+                    );
+                    return;
+                }
             }
         };
     }
