@@ -79,8 +79,8 @@ async fn handler(worksapce: &str, channel: &str, sm: SlackMessage) {
                 for issue in pages {
                     if triggered {
                         count -= 1;
-                        let summary = "placeholder for gpt summary";
-                        // let summary = get_summary(&owner, &repo, issue).await;
+                        // let summary = "placeholder for gpt summary";
+                        let summary = get_summary(&owner, &repo, issue).await;
                         send_message_to_channel(&worksapce, &channel, summary.to_string());
 
                         if count <= 0 {
@@ -99,17 +99,18 @@ async fn handler(worksapce: &str, channel: &str, sm: SlackMessage) {
                 send_message_to_channel(
                     &worksapce,
                     &channel,
-                    r#"Please double check if there are errors in the owner and repo names provided in your message:
+                    format!(
+                        r#"Please double check if there are errors in the owner and repo names provided in your message:
         {_text}
         if yes, please correct the spelling and resend your instruction."#
-                        .to_string(),
+                    ),
                 );
                 return;
             }
         };
     }
 }
-/*
+
 async fn get_summary(owner: &str, repo: &str, issue: Issue) -> String {
     let mut openai = OpenAIFlows::new();
     openai.set_retry_times(3);
@@ -212,4 +213,3 @@ async fn get_summary(owner: &str, repo: &str, issue: Issue) -> String {
 
     format!("Issue Summary:\n{}\n{}", _summary, issue_url)
 }
- */
