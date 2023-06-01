@@ -56,8 +56,8 @@ async fn handler(worksapce: &str, channel: &str, sm: SlackMessage) {
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
 
-        let owner = owner_repo.get(0).unwrap_or(&"".to_string()).to_string();
-        let repo = owner_repo.get(1).unwrap_or(&"".to_string()).to_string();
+        let owner = owner_repo.get(0).unwrap_or(&"wasmedge".to_string()).to_string();
+        let repo = owner_repo.get(1).unwrap_or(&"wasmedge".to_string()).to_string();
 
         let query = format!("repo:{owner}/{repo} is:issue state:open updated:>{n_days_ago_str}");
 
