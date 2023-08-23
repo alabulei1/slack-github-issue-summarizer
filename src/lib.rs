@@ -15,7 +15,7 @@ pub fn run() {
     dotenv().ok();
 
     let slack_workspace = env::var("slack_workspace").unwrap_or("secondstate".to_string());
-    let slack_channel = env::var("slack_channel").unwrap_or("github-status".to_string());
+    let slack_channel = env::var("slack_channel").unwrap_or("test-flow".to_string());
 
     listen_to_channel(&slack_workspace, &slack_channel, |sm| {
         handler(&slack_workspace, &slack_channel, sm);
@@ -56,8 +56,8 @@ async fn handler(worksapce: &str, channel: &str, sm: SlackMessage) {
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
 
-        let owner = owner_repo.get(0).unwrap_or(&"WasmEdge".to_string()).to_string();
-        let repo = owner_repo.get(1).unwrap_or(&"Wasmdge".to_string()).to_string();
+        let owner = owner_repo.get(0).unwrap_or(&"flows-network".to_string()).to_string();
+        let repo = owner_repo.get(1).unwrap_or(&"haiku-platform".to_string()).to_string();
 
         let query = format!("repo:{owner}/{repo} is:issue state:open updated:>{n_days_ago_str}");
 
